@@ -20,8 +20,8 @@ func parseArgs(args []string) (options, error) {
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 
-		if strings.HasPrefix(arg, "--template=") {
-			opts.template = strings.TrimPrefix(arg, "--template=")
+		if after, ok := strings.CutPrefix(arg, "--template="); ok {
+			opts.template = after
 
 			if strings.TrimSpace(opts.template) == "" {
 				return opts, fmt.Errorf("--template requires a name")
