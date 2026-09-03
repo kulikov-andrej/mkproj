@@ -256,9 +256,30 @@ func (a *app) newProject(
 		)
 	}
 
-	cleanupErr := os.RemoveAll(
-		filepath.Join(targetPath, ".mkproj"),
+	hookErr := a.invokeTemplateHook(
+		targetPath,
+		template,
+		projectName,
 	)
+
+	cleanupErr := os.RemoveAll(
+		filepath.Join(
+			targetPath,
+			".mkproj",
+		),
+	)
+
+	if hookErr != nil {
+		if cleanupErr != nil {
+			return fmt.Errorf(
+				"%w; cleanup template metadata: %v",
+				hookErr,
+				cleanupErr,
+			)
+		}
+
+		return hookErr
+	}
 
 	if cleanupErr != nil {
 		return fmt.Errorf(
