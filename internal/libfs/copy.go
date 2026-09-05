@@ -1,4 +1,4 @@
-package main
+package libfs
 
 import (
 	"fmt"
@@ -8,52 +8,7 @@ import (
 	"path/filepath"
 )
 
-func resolveTargetPath(target string) (string, error) {
-	path, err := filepath.Abs(target)
-	if err != nil {
-		return "", fmt.Errorf(
-			"resolve target path: %w",
-			err,
-		)
-	}
-
-	return filepath.Clean(path), nil
-}
-
-func prepareTargetDirectory(path string) error {
-	info, err := os.Stat(path)
-
-	if os.IsNotExist(err) {
-		return os.MkdirAll(path, 0o755)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	if !info.IsDir() {
-		return fmt.Errorf(
-			"target exists and is not a directory: %s",
-			path,
-		)
-	}
-
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		return err
-	}
-
-	if len(entries) != 0 {
-		return fmt.Errorf(
-			"target directory is not empty: %s",
-			path,
-		)
-	}
-
-	return nil
-}
-
-func copyTemplate(source, target string) error {
+func CopyTree(source, target string) error {
 	return filepath.WalkDir(
 		source,
 		func(
@@ -65,24 +20,34 @@ func copyTemplate(source, target string) error {
 				return walkErr
 			}
 
+			info, err := entry.Info()
+			if err != nil {
+				return err
+			}
+
 			relative, err := filepath.Rel(source, path)
 			if err != nil {
 				return err
 			}
 
 			if relative == "." {
-				return nil
+				if !entry.IsDir() {
+					return fmt.Errorf(
+						"source is not a directory: %s",
+						source,
+					)
+				}
+
+				return os.MkdirAll(
+					target,
+					info.Mode().Perm(),
+				)
 			}
 
 			destination := filepath.Join(
 				target,
 				relative,
 			)
-
-			info, err := entry.Info()
-			if err != nil {
-				return err
-			}
 
 			switch {
 			case entry.IsDir():

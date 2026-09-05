@@ -1,4 +1,4 @@
-package main
+package hooks
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/kulikov-andrej/mkproj/internal/libfs"
 
 	"go.starlark.net/starlark"
 )
@@ -69,9 +71,9 @@ func (h *hookContext) run(
 	)
 
 	cmd.Dir = h.projectPath
-	cmd.Stdin = h.app.stdin
-	cmd.Stdout = h.app.stdout
-	cmd.Stderr = h.app.stderr
+	cmd.Stdin = h.stdin
+	cmd.Stdout = h.stdout
+	cmd.Stderr = h.stderr
 
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf(
@@ -109,7 +111,7 @@ func (h *hookContext) replace(
 		return nil, err
 	}
 
-	fullPath, err := h.resolvePath(path)
+	fullPath, err := libfs.ResolveInside(h.projectPath, path)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +181,7 @@ func (h *hookContext) write(
 		return nil, err
 	}
 
-	fullPath, err := h.resolvePath(path)
+	fullPath, err := libfs.ResolveInside(h.projectPath, path)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +231,7 @@ func (h *hookContext) mkdir(
 		return nil, err
 	}
 
-	fullPath, err := h.resolvePath(path)
+	fullPath, err := libfs.ResolveInside(h.projectPath, path)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +269,7 @@ func (h *hookContext) remove(
 		return nil, err
 	}
 
-	fullPath, err := h.resolvePath(path)
+	fullPath, err := libfs.ResolveInside(h.projectPath, path)
 	if err != nil {
 		return nil, err
 	}
@@ -289,51 +291,6 @@ func (h *hookContext) remove(
 	}
 
 	return starlark.None, nil
-}
-
-func (h *hookContext) resolvePath(
-	path string,
-) (string, error) {
-	if path == "" {
-		return "", fmt.Errorf("path cannot be empty")
-	}
-
-	if filepath.IsAbs(path) {
-		return "", fmt.Errorf(
-			"path must be relative to project: %s",
-			path,
-		)
-	}
-
-	fullPath := filepath.Clean(
-		filepath.Join(
-			h.projectPath,
-			path,
-		),
-	)
-
-	relative, err := filepath.Rel(
-		h.projectPath,
-		fullPath,
-	)
-
-	if err != nil {
-		return "", err
-	}
-
-	if relative == ".." ||
-		strings.HasPrefix(
-			relative,
-			".."+string(filepath.Separator),
-		) {
-
-		return "", fmt.Errorf(
-			"path escapes project directory: %s",
-			path,
-		)
-	}
-
-	return fullPath, nil
 }
 
 func starlarkString(
