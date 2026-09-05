@@ -1,9 +1,13 @@
-package main
+package hooks
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/kulikov-andrej/mkproj/internal/data/project"
+	"github.com/kulikov-andrej/mkproj/internal/data/templates"
 
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
@@ -11,19 +15,23 @@ import (
 )
 
 type hookContext struct {
-	app         *app
-	projectName string
-	projectPath string
-	template    string
+	projectName  string
+	projectPath  string
+	templateName string
+	stdin        io.Reader
+	stdout       io.Writer
+	stderr       io.Writer
 }
 
-func (a *app) invokeTemplateHook(
-	projectPath string,
-	template string,
-	projectName string,
+func Run(
+	proj project.Project,
+	template templates.Template,
+	stdin io.Reader,
+	stdout io.Writer,
+	stderr io.Writer,
 ) error {
 	hookPath := filepath.Join(
-		projectPath,
+		proj.Path,
 		".mkproj",
 		"hook.star",
 	)
@@ -46,10 +54,12 @@ func (a *app) invokeTemplateHook(
 	}
 
 	ctx := &hookContext{
-		app:         a,
-		projectName: projectName,
-		projectPath: projectPath,
-		template:    template,
+		projectName:  proj.Name,
+		projectPath:  proj.Path,
+		templateName: template.Name,
+		stdin:        stdin,
+		stdout:       stdout,
+		stderr:       stderr,
 	}
 
 	thread := &starlark.Thread{
@@ -59,7 +69,7 @@ func (a *app) invokeTemplateHook(
 			_ *starlark.Thread,
 			message string,
 		) {
-			fmt.Fprintln(a.stdout, message)
+			fmt.Fprintln(stdout, message)
 		},
 
 		Load: func(
@@ -115,7 +125,7 @@ func (h *hookContext) globals() starlark.StringDict {
 		"template": starlarkstruct.FromStringDict(
 			starlarkstruct.Default,
 			starlark.StringDict{
-				"name": starlark.String(h.template),
+				"name": starlark.String(h.templateName),
 			},
 		),
 
