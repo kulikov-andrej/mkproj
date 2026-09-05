@@ -3,8 +3,6 @@ package cli
 import (
 	"fmt"
 	"io"
-
-	"github.com/kulikov-andrej/mkproj/internal/core"
 )
 
 func Run(
@@ -18,13 +16,13 @@ func Run(
 		return err
 	}
 
-	if opts.help {
+	if len(args) == 0 || opts.help {
 		showHelp(stdout)
 		return nil
 	}
 
 	if opts.list {
-		items, err := core.ListTemplates()
+		items, err := listTemplates()
 		if err != nil {
 			return err
 		}
@@ -55,7 +53,7 @@ func Run(
 		opts.template,
 	)
 
-	project, err := core.CreateProject(
+	project, err := createProject(
 		opts.template,
 		opts.target,
 		stdin,
@@ -75,7 +73,7 @@ func Run(
 
 	if opts.open {
 		fmt.Fprintln(stdout, "Opening Code...")
-		return core.OpenProject(project)
+		return openProject(project)
 	}
 
 	return nil
