@@ -74,6 +74,24 @@ func TestParseArgs(t *testing.T) {
 				help: true,
 			},
 		},
+		{
+			name: "version",
+			args: []string{
+				"-v",
+			},
+			want: options{
+				version: true,
+			},
+		},
+		{
+			name: "long version",
+			args: []string{
+				"--version",
+			},
+			want: options{
+				version: true,
+			},
+		},
 	}
 
 	for _, tt := range tests {

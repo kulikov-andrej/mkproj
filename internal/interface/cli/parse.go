@@ -11,6 +11,7 @@ type options struct {
 	open     bool
 	list     bool
 	help     bool
+	version  bool
 }
 
 func parseArgs(args []string) (options, error) {
@@ -22,6 +23,9 @@ func parseArgs(args []string) (options, error) {
 		switch {
 		case arg == "-h" || arg == "--help":
 			opts.help = true
+
+		case arg == "-v" || arg == "--version":
+			opts.version = true
 
 		case arg == "-l" || arg == "--list":
 			opts.list = true

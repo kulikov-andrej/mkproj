@@ -3,10 +3,12 @@ package cli
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
 
+	"github.com/kulikov-andrej/mkproj/internal/buildinfo"
 	"github.com/kulikov-andrej/mkproj/internal/data/project"
 	"github.com/kulikov-andrej/mkproj/internal/data/templates"
 )
@@ -76,6 +78,40 @@ func TestRunHelp(t *testing.T) {
 		t.Fatalf(
 			"expected help output, got %q",
 			stdout.String(),
+		)
+	}
+}
+func TestRunVersion(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	err := Run(
+		[]string{"--version"},
+		strings.NewReader(""),
+		&stdout,
+		&stderr,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := fmt.Sprintf(
+		"mkproj %s\n",
+		buildinfo.Version,
+	)
+
+	if got := stdout.String(); got != want {
+		t.Fatalf(
+			"expected stdout %q, got %q",
+			want,
+			got,
+		)
+	}
+
+	if stderr.Len() != 0 {
+		t.Fatalf(
+			"unexpected stderr: %q",
+			stderr.String(),
 		)
 	}
 }

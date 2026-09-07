@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 	"io"
+
+	"github.com/kulikov-andrej/mkproj/internal/buildinfo"
 )
 
 func Run(
@@ -18,6 +20,16 @@ func Run(
 
 	if len(args) == 0 || opts.help {
 		showHelp(stdout)
+		return nil
+	}
+
+	if opts.version {
+		fmt.Fprintf(
+			stdout,
+			"mkproj %s\n",
+			buildinfo.Version,
+		)
+
 		return nil
 	}
 

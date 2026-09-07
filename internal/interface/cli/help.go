@@ -11,10 +11,12 @@ func showHelp(out io.Writer) {
   mkproj --template=<name> <path> [--open]
   mkproj --list
   mkproj --help
+  mkproj --version
 
 Options:
   -t, --template <name>  Template to use
   -o, --open             Open project in Code
   -l, --list             List available templates
-  -h, --help             Show help`)
+  -h, --help             Show help
+  -v, --version          Show current version`)
 }
