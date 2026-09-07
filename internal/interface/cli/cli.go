@@ -73,8 +73,13 @@ func Run(
 
 	if opts.open {
 		fmt.Fprintln(stdout, "Opening Code...")
-		return openProject(project)
+
+		if err := openProject(project); err != nil {
+			return err
+		}
 	}
+
+	fmt.Fprintln(stdout, "Have a nice day :)")
 
 	return nil
 }
