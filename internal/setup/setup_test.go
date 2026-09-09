@@ -1,4 +1,4 @@
-package hooks
+package setup
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"github.com/kulikov-andrej/mkproj/internal/data/templates"
 )
 
-func runTestHook(
+func runTestSetup(
 	t *testing.T,
 	source string,
 ) (
@@ -38,7 +38,7 @@ func runTestHook(
 	if err := os.WriteFile(
 		filepath.Join(
 			metadataPath,
-			"hook.star",
+			"setup.star",
 		),
 		[]byte(source),
 		0o644,
@@ -65,7 +65,7 @@ func runTestHook(
 	return projectPath, &stdout, err
 }
 
-func TestRunWithoutHook(t *testing.T) {
+func TestRunWithoutSetup(t *testing.T) {
 	projectPath := t.TempDir()
 
 	err := Run(
@@ -87,7 +87,7 @@ func TestRunWithoutHook(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
-	projectPath, stdout, err := runTestHook(
+	projectPath, stdout, err := runTestSetup(
 		t,
 		`
 print(project.name)
@@ -131,7 +131,7 @@ write(
 }
 
 func TestReplace(t *testing.T) {
-	projectPath, _, err := runTestHook(
+	projectPath, _, err := runTestSetup(
 		t,
 		`
 write("project.txt", "name={{NAME}}")
@@ -169,7 +169,7 @@ if count != 1:
 }
 
 func TestWriteCannotEscapeProject(t *testing.T) {
-	projectPath, _, err := runTestHook(
+	projectPath, _, err := runTestSetup(
 		t,
 		`
 write("../outside.txt", "nope")
@@ -202,8 +202,8 @@ write("../outside.txt", "nope")
 		)
 	}
 }
-func TestRunReturnsHookError(t *testing.T) {
-	_, _, err := runTestHook(
+func TestRunReturnsSetupError(t *testing.T) {
+	_, _, err := runTestSetup(
 		t,
 		`
 missing_function()
@@ -216,7 +216,7 @@ missing_function()
 
 	if !strings.Contains(
 		err.Error(),
-		"template hook failed",
+		"template setup failed",
 	) {
 		t.Fatalf(
 			"unexpected error: %v",

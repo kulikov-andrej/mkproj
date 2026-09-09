@@ -23,7 +23,7 @@ func CreateProject(
 		return project.Project{}, err
 	}
 
-	hookErr := runHook(
+	hookErr := runSetup(
 		proj,
 		template,
 		stdin,

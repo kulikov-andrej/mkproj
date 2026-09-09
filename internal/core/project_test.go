@@ -15,14 +15,14 @@ func resetProjectFunctions(t *testing.T) {
 
 	oldGetTemplate := getTemplate
 	oldCreateProject := createProject
-	oldRunHook := runHook
+	oldRunSetup := runSetup
 	oldCleanupMetadata := cleanupMetadata
 	oldOpenProject := openProject
 
 	t.Cleanup(func() {
 		getTemplate = oldGetTemplate
 		createProject = oldCreateProject
-		runHook = oldRunHook
+		runSetup = oldRunSetup
 		cleanupMetadata = oldCleanupMetadata
 		openProject = oldOpenProject
 	})
@@ -69,14 +69,14 @@ func TestCreateProject(t *testing.T) {
 		return proj, nil
 	}
 
-	runHook = func(
+	runSetup = func(
 		gotProject project.Project,
 		gotTemplate templates.Template,
 		_ io.Reader,
 		_ io.Writer,
 		_ io.Writer,
 	) error {
-		calls = append(calls, "hook")
+		calls = append(calls, "setup")
 
 		if gotProject != proj {
 			t.Fatalf("unexpected project: %#v", gotProject)
@@ -123,7 +123,7 @@ func TestCreateProject(t *testing.T) {
 	want := []string{
 		"get",
 		"create",
-		"hook",
+		"setup",
 		"cleanup",
 	}
 
@@ -200,14 +200,14 @@ func TestCreateProjectStopsOnCreateError(t *testing.T) {
 		return project.Project{}, expected
 	}
 
-	runHook = func(
+	runSetup = func(
 		project.Project,
 		templates.Template,
 		io.Reader,
 		io.Writer,
 		io.Writer,
 	) error {
-		t.Fatal("hook should not be called")
+		t.Fatal("setup should not be called")
 		return nil
 	}
 
@@ -227,10 +227,10 @@ func TestCreateProjectStopsOnCreateError(t *testing.T) {
 		)
 	}
 }
-func TestCreateProjectCleansUpAfterHookError(t *testing.T) {
+func TestCreateProjectCleansUpAfterSetupError(t *testing.T) {
 	resetProjectFunctions(t)
 
-	hookError := errors.New("hook error")
+	setupError := errors.New("setup error")
 
 	proj := project.Project{
 		Name: "hello",
@@ -252,14 +252,14 @@ func TestCreateProjectCleansUpAfterHookError(t *testing.T) {
 		return proj, nil
 	}
 
-	runHook = func(
+	runSetup = func(
 		project.Project,
 		templates.Template,
 		io.Reader,
 		io.Writer,
 		io.Writer,
 	) error {
-		return hookError
+		return setupError
 	}
 
 	cleaned := false
@@ -279,10 +279,10 @@ func TestCreateProjectCleansUpAfterHookError(t *testing.T) {
 		&bytes.Buffer{},
 	)
 
-	if !errors.Is(err, hookError) {
+	if !errors.Is(err, setupError) {
 		t.Fatalf(
 			"expected %v, got %v",
-			hookError,
+			setupError,
 			err,
 		)
 	}
@@ -316,7 +316,7 @@ func TestCreateProjectReturnsCleanupError(t *testing.T) {
 		return proj, nil
 	}
 
-	runHook = func(
+	runSetup = func(
 		project.Project,
 		templates.Template,
 		io.Reader,

@@ -1,4 +1,4 @@
-package hooks
+package setup
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"go.starlark.net/syntax"
 )
 
-type hookContext struct {
+type setupContext struct {
 	projectName  string
 	projectPath  string
 	templateName string
@@ -30,30 +30,30 @@ func Run(
 	stdout io.Writer,
 	stderr io.Writer,
 ) error {
-	hookPath := filepath.Join(
+	setupPath := filepath.Join(
 		proj.Path,
 		".mkproj",
-		"hook.star",
+		"setup.star",
 	)
 
-	info, err := os.Stat(hookPath)
+	info, err := os.Stat(setupPath)
 
 	if os.IsNotExist(err) {
 		return nil
 	}
 
 	if err != nil {
-		return fmt.Errorf("stat template hook: %w", err)
+		return fmt.Errorf("stat template setup: %w", err)
 	}
 
 	if info.IsDir() {
 		return fmt.Errorf(
-			"template hook is a directory: %s",
-			hookPath,
+			"template setup is a directory: %s",
+			setupPath,
 		)
 	}
 
-	ctx := &hookContext{
+	ctx := &setupContext{
 		projectName:  proj.Name,
 		projectPath:  proj.Path,
 		templateName: template.Name,
@@ -63,7 +63,7 @@ func Run(
 	}
 
 	thread := &starlark.Thread{
-		Name: "mkproj hook",
+		Name: "mkproj setup",
 
 		Print: func(
 			_ *starlark.Thread,
@@ -90,7 +90,7 @@ func Run(
 	_, err = starlark.ExecFileOptions(
 		options,
 		thread,
-		hookPath,
+		setupPath,
 		nil,
 		ctx.globals(),
 	)
@@ -98,13 +98,13 @@ func Run(
 	if err != nil {
 		if evalErr, ok := err.(*starlark.EvalError); ok {
 			return fmt.Errorf(
-				"template hook failed:\n%s",
+				"template setup failed:\n%s",
 				evalErr.Backtrace(),
 			)
 		}
 
 		return fmt.Errorf(
-			"template hook failed: %w",
+			"template setup failed: %w",
 			err,
 		)
 	}
@@ -112,7 +112,7 @@ func Run(
 	return nil
 }
 
-func (h *hookContext) globals() starlark.StringDict {
+func (h *setupContext) globals() starlark.StringDict {
 	return starlark.StringDict{
 		"project": starlarkstruct.FromStringDict(
 			starlarkstruct.Default,

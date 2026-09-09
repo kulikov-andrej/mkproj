@@ -1,4 +1,4 @@
-package hooks
+package setup
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"go.starlark.net/starlark"
 )
 
-func (h *hookContext) run(
+func (h *setupContext) run(
 	_ *starlark.Thread,
 	builtin *starlark.Builtin,
 	args starlark.Tuple,
@@ -87,7 +87,7 @@ func (h *hookContext) run(
 	return starlark.None, nil
 }
 
-func (h *hookContext) replace(
+func (h *setupContext) replace(
 	_ *starlark.Thread,
 	builtin *starlark.Builtin,
 	args starlark.Tuple,
@@ -160,7 +160,7 @@ func (h *hookContext) replace(
 	return starlark.MakeInt(count), nil
 }
 
-func (h *hookContext) write(
+func (h *setupContext) write(
 	_ *starlark.Thread,
 	builtin *starlark.Builtin,
 	args starlark.Tuple,
@@ -213,7 +213,7 @@ func (h *hookContext) write(
 	return starlark.None, nil
 }
 
-func (h *hookContext) mkdir(
+func (h *setupContext) mkdir(
 	_ *starlark.Thread,
 	builtin *starlark.Builtin,
 	args starlark.Tuple,
@@ -251,7 +251,7 @@ func (h *hookContext) mkdir(
 	return starlark.None, nil
 }
 
-func (h *hookContext) remove(
+func (h *setupContext) remove(
 	_ *starlark.Thread,
 	builtin *starlark.Builtin,
 	args starlark.Tuple,
