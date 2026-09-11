@@ -263,6 +263,44 @@ func TestRunCreate(t *testing.T) {
 		)
 	}
 }
+func TestRunUsesCurrentDirectoryAsDefaultTarget(t *testing.T) {
+	resetDependencies(t)
+
+	var gotTarget string
+
+	createProject = func(
+		_ string,
+		target string,
+		_ io.Reader,
+		_ io.Writer,
+		_ io.Writer,
+	) (project.Project, error) {
+		gotTarget = target
+
+		return project.Project{
+			Name: "project",
+			Path: "target/path",
+		}, nil
+	}
+
+	err := Run(
+		[]string{"-t", "example"},
+		strings.NewReader(""),
+		&bytes.Buffer{},
+		&bytes.Buffer{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if gotTarget != "." {
+		t.Fatalf(
+			"expected target %q, got %q",
+			".",
+			gotTarget,
+		)
+	}
+}
 func TestRunOpen(t *testing.T) {
 	resetDependencies(t)
 

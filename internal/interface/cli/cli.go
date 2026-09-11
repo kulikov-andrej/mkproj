@@ -55,7 +55,7 @@ func Run(
 	}
 
 	if opts.target == "" {
-		return fmt.Errorf("target path is required")
+		opts.target = "."
 	}
 
 	fmt.Fprintf(
