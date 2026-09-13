@@ -1,6 +1,6 @@
 package cli
 
-import "github.com/kulikov-andrej/mkproj/internal/core"
+import "github.com/kulikov-andrej/mkproj/internal/mkproj/core"
 
 var (
 	listTemplates = core.ListTemplates

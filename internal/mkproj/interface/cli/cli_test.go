@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kulikov-andrej/mkproj/internal/buildinfo"
-	"github.com/kulikov-andrej/mkproj/internal/data/project"
-	"github.com/kulikov-andrej/mkproj/internal/data/templates"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/buildinfo"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/project"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/templates"
 )
 
 func resetDependencies(t *testing.T) {

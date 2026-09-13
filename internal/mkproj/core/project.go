@@ -3,7 +3,7 @@ package core
 import (
 	"io"
 
-	"github.com/kulikov-andrej/mkproj/internal/data/project"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/project"
 )
 
 func CreateProject(

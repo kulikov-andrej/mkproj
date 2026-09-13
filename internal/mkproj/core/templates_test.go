@@ -3,7 +3,7 @@ package core
 import (
 	"testing"
 
-	"github.com/kulikov-andrej/mkproj/internal/data/templates"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/templates"
 )
 
 func TestListTemplates(t *testing.T) {

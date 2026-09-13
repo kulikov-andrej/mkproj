@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kulikov-andrej/mkproj/internal/data/templates"
 	"github.com/kulikov-andrej/mkproj/internal/libfs"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/templates"
 )
 
 func Create(

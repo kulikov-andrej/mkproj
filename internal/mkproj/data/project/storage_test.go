@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kulikov-andrej/mkproj/internal/data/templates"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/templates"
 )
 
 func TestCreate(t *testing.T) {

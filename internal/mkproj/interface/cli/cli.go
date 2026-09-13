@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/kulikov-andrej/mkproj/internal/buildinfo"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/buildinfo"
 )
 
 func Run(
