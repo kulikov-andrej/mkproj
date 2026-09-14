@@ -1,10 +1,7 @@
 package cli
 
 import (
-	"fmt"
 	"io"
-
-	"github.com/kulikov-andrej/mkproj/internal/mkproj/buildinfo"
 )
 
 func Run(
@@ -18,80 +15,23 @@ func Run(
 		return err
 	}
 
-	if len(args) == 0 || opts.help {
+	switch {
+	case len(args) == 0 || opts.help:
 		showHelp(stdout)
 		return nil
-	}
 
-	if opts.version {
-		fmt.Fprintf(
+	case opts.version:
+		return runVersion(stdout)
+
+	case opts.list:
+		return runTemplateList(stdout, stderr)
+
+	default:
+		return runProject(
+			opts,
+			stdin,
 			stdout,
-			"mkproj %s\n",
-			buildinfo.Version,
+			stderr,
 		)
-
-		return nil
 	}
-
-	if opts.list {
-		items, err := listTemplates()
-		if err != nil {
-			return err
-		}
-		if len(items) == 0 {
-			fmt.Fprintln(stderr, "No templates found.")
-			return nil
-		}
-
-		for _, template := range items {
-			fmt.Fprintln(stdout, template.Name)
-		}
-
-		return nil
-	}
-
-	if opts.template == "" {
-		return fmt.Errorf("template is required")
-	}
-
-	if opts.target == "" {
-		opts.target = "."
-	}
-
-	fmt.Fprintf(
-		stdout,
-		"Creating project %q using template %q...\n",
-		opts.target,
-		opts.template,
-	)
-
-	project, err := createProject(
-		opts.template,
-		opts.target,
-		stdin,
-		stdout,
-		stderr,
-	)
-	if err != nil {
-		return err
-	}
-
-	fmt.Fprintf(
-		stdout,
-		"Created %q.\n  %s\n",
-		project.Name,
-		project.Path,
-	)
-
-	if opts.open {
-		fmt.Fprintln(stdout, "Opening Code...")
-
-		if err := openProject(project); err != nil {
-			return err
-		}
-	}
-
-	fmt.Fprintln(stdout, "Have a nice day :)")
-
-	return nil
 }
