@@ -12,7 +12,7 @@ import (
 	"go.starlark.net/starlark"
 )
 
-func (h *setupContext) run(
+func (ctx *setupContext) run(
 	_ *starlark.Thread,
 	builtin *starlark.Builtin,
 	args starlark.Tuple,
@@ -70,10 +70,10 @@ func (h *setupContext) run(
 		commandArgs...,
 	)
 
-	cmd.Dir = h.projectPath
-	cmd.Stdin = h.stdin
-	cmd.Stdout = h.stdout
-	cmd.Stderr = h.stderr
+	cmd.Dir = ctx.proj.Path
+	cmd.Stdin = ctx.stdin
+	cmd.Stdout = ctx.stdout
+	cmd.Stderr = ctx.stderr
 
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf(
@@ -87,7 +87,7 @@ func (h *setupContext) run(
 	return starlark.None, nil
 }
 
-func (h *setupContext) replace(
+func (ctx *setupContext) replace(
 	_ *starlark.Thread,
 	builtin *starlark.Builtin,
 	args starlark.Tuple,
@@ -111,7 +111,7 @@ func (h *setupContext) replace(
 		return nil, err
 	}
 
-	fullPath, err := libfs.ResolveInside(h.projectPath, path)
+	fullPath, err := libfs.ResolveInside(ctx.proj.Path, path)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func (h *setupContext) replace(
 	return starlark.MakeInt(count), nil
 }
 
-func (h *setupContext) write(
+func (ctx *setupContext) write(
 	_ *starlark.Thread,
 	builtin *starlark.Builtin,
 	args starlark.Tuple,
@@ -181,7 +181,7 @@ func (h *setupContext) write(
 		return nil, err
 	}
 
-	fullPath, err := libfs.ResolveInside(h.projectPath, path)
+	fullPath, err := libfs.ResolveInside(ctx.proj.Path, path)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (h *setupContext) write(
 	return starlark.None, nil
 }
 
-func (h *setupContext) mkdir(
+func (ctx *setupContext) mkdir(
 	_ *starlark.Thread,
 	builtin *starlark.Builtin,
 	args starlark.Tuple,
@@ -231,7 +231,7 @@ func (h *setupContext) mkdir(
 		return nil, err
 	}
 
-	fullPath, err := libfs.ResolveInside(h.projectPath, path)
+	fullPath, err := libfs.ResolveInside(ctx.proj.Path, path)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +251,7 @@ func (h *setupContext) mkdir(
 	return starlark.None, nil
 }
 
-func (h *setupContext) remove(
+func (ctx *setupContext) remove(
 	_ *starlark.Thread,
 	builtin *starlark.Builtin,
 	args starlark.Tuple,
@@ -269,12 +269,12 @@ func (h *setupContext) remove(
 		return nil, err
 	}
 
-	fullPath, err := libfs.ResolveInside(h.projectPath, path)
+	fullPath, err := libfs.ResolveInside(ctx.proj.Path, path)
 	if err != nil {
 		return nil, err
 	}
 
-	if fullPath == h.projectPath {
+	if fullPath == ctx.proj.Path {
 		return nil, fmt.Errorf(
 			"%s: refusing to remove project root",
 			builtin.Name(),

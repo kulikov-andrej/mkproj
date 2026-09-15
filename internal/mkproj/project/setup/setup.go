@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/project"
-	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/templates"
+	projectmodel "github.com/kulikov-andrej/mkproj/internal/mkproj/project/model"
+	templatemodel "github.com/kulikov-andrej/mkproj/internal/mkproj/templates/model"
 
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
@@ -15,17 +15,16 @@ import (
 )
 
 type setupContext struct {
-	projectName  string
-	projectPath  string
-	templateName string
-	stdin        io.Reader
-	stdout       io.Writer
-	stderr       io.Writer
+	proj   projectmodel.Project
+	tmpl   templatemodel.Template
+	stdin  io.Reader
+	stdout io.Writer
+	stderr io.Writer
 }
 
 func Run(
-	proj project.Project,
-	template templates.Template,
+	proj projectmodel.Project,
+	tmpl templatemodel.Template,
 	stdin io.Reader,
 	stdout io.Writer,
 	stderr io.Writer,
@@ -54,12 +53,11 @@ func Run(
 	}
 
 	ctx := &setupContext{
-		projectName:  proj.Name,
-		projectPath:  proj.Path,
-		templateName: template.Name,
-		stdin:        stdin,
-		stdout:       stdout,
-		stderr:       stderr,
+		proj:   proj,
+		tmpl:   tmpl,
+		stdin:  stdin,
+		stdout: stdout,
+		stderr: stderr,
 	}
 
 	thread := &starlark.Thread{
@@ -112,46 +110,46 @@ func Run(
 	return nil
 }
 
-func (h *setupContext) globals() starlark.StringDict {
+func (ctx *setupContext) globals() starlark.StringDict {
 	return starlark.StringDict{
 		"project": starlarkstruct.FromStringDict(
 			starlarkstruct.Default,
 			starlark.StringDict{
-				"name": starlark.String(h.projectName),
-				"path": starlark.String(h.projectPath),
+				"name": starlark.String(ctx.proj.Name),
+				"path": starlark.String(ctx.proj.Path),
 			},
 		),
 
 		"template": starlarkstruct.FromStringDict(
 			starlarkstruct.Default,
 			starlark.StringDict{
-				"name": starlark.String(h.templateName),
+				"name": starlark.String(ctx.tmpl.Name),
 			},
 		),
 
 		"run": starlark.NewBuiltin(
 			"run",
-			h.run,
+			ctx.run,
 		),
 
 		"replace": starlark.NewBuiltin(
 			"replace",
-			h.replace,
+			ctx.replace,
 		),
 
 		"write": starlark.NewBuiltin(
 			"write",
-			h.write,
+			ctx.write,
 		),
 
 		"mkdir": starlark.NewBuiltin(
 			"mkdir",
-			h.mkdir,
+			ctx.mkdir,
 		),
 
 		"remove": starlark.NewBuiltin(
 			"remove",
-			h.remove,
+			ctx.remove,
 		),
 	}
 }

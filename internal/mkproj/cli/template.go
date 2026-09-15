@@ -9,18 +9,18 @@ func runTemplateList(
 	stdout io.Writer,
 	stderr io.Writer,
 ) error {
-	items, err := listTemplates()
+	tmpls, err := listTemplates()
 	if err != nil {
 		return err
 	}
 
-	if len(items) == 0 {
+	if len(tmpls) == 0 {
 		fmt.Fprintln(stderr, "No templates found.")
 		return nil
 	}
 
-	for _, template := range items {
-		fmt.Fprintln(stdout, template.Name)
+	for _, tmpl := range tmpls {
+		fmt.Fprintln(stdout, tmpl.Name)
 	}
 
 	return nil

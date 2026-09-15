@@ -27,7 +27,7 @@ func runProject(
 		opts.template,
 	)
 
-	project, err := createProject(
+	proj, err := createProject(
 		opts.template,
 		target,
 		stdin,
@@ -41,14 +41,14 @@ func runProject(
 	fmt.Fprintf(
 		stdout,
 		"Created %q.\n  %s\n",
-		project.Name,
-		project.Path,
+		proj.Name,
+		proj.Path,
 	)
 
 	if opts.open {
 		fmt.Fprintln(stdout, "Opening Code...")
 
-		if err := openProject(project); err != nil {
+		if err := openProject(proj); err != nil {
 			return err
 		}
 	}

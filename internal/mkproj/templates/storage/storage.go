@@ -1,4 +1,4 @@
-package templates
+package storage
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/templates/model"
 )
 
 func defaultRoot() (string, error) {
@@ -24,10 +26,10 @@ func defaultRoot() (string, error) {
 	), nil
 }
 
-func List() ([]Template, error) {
+func List() ([]model.Template, error) {
 	root, err := resolveRoot()
 	if err != nil {
-		return []Template{}, err
+		return []model.Template{}, err
 	}
 
 	entries, err := os.ReadDir(root)
@@ -44,7 +46,7 @@ func List() ([]Template, error) {
 	}
 
 	result := make(
-		[]Template,
+		[]model.Template,
 		0,
 		len(entries),
 	)
@@ -56,7 +58,7 @@ func List() ([]Template, error) {
 
 		result = append(
 			result,
-			Template{
+			model.Template{
 				Name: entry.Name(),
 				Path: filepath.Join(
 					root,
@@ -76,14 +78,14 @@ func List() ([]Template, error) {
 	return result, nil
 }
 
-func Get(name string) (Template, error) {
+func Get(name string) (model.Template, error) {
 	if err := validateName(name); err != nil {
-		return Template{}, err
+		return model.Template{}, err
 	}
 
 	root, err := resolveRoot()
 	if err != nil {
-		return Template{}, err
+		return model.Template{}, err
 	}
 
 	path := filepath.Join(
@@ -94,14 +96,14 @@ func Get(name string) (Template, error) {
 	info, err := os.Stat(path)
 
 	if os.IsNotExist(err) {
-		return Template{}, fmt.Errorf(
+		return model.Template{}, fmt.Errorf(
 			"template %q not found",
 			name,
 		)
 	}
 
 	if err != nil {
-		return Template{}, fmt.Errorf(
+		return model.Template{}, fmt.Errorf(
 			"access template %q: %w",
 			name,
 			err,
@@ -109,13 +111,13 @@ func Get(name string) (Template, error) {
 	}
 
 	if !info.IsDir() {
-		return Template{}, fmt.Errorf(
+		return model.Template{}, fmt.Errorf(
 			"template %q is not a directory",
 			name,
 		)
 	}
 
-	return Template{
+	return model.Template{
 		Name: name,
 		Path: path,
 	}, nil

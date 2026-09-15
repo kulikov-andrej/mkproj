@@ -1,4 +1,4 @@
-package setup
+package setup_test
 
 import (
 	"bytes"
@@ -7,8 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/project"
-	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/templates"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/project"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/project/setup"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/templates"
 )
 
 func runTestSetup(
@@ -46,17 +47,21 @@ func runTestSetup(
 		t.Fatal(err)
 	}
 
+	proj := project.Project{
+		Name: "hello",
+		Path: projectPath,
+	}
+
+	tmpl := templates.Template{
+		Name: "example",
+	}
+
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	err := Run(
-		project.Project{
-			Name: "hello",
-			Path: projectPath,
-		},
-		templates.Template{
-			Name: "example",
-		},
+	err := setup.Run(
+		proj,
+		tmpl,
 		strings.NewReader(""),
 		&stdout,
 		&stderr,
@@ -66,16 +71,18 @@ func runTestSetup(
 }
 
 func TestRunWithoutSetup(t *testing.T) {
-	projectPath := t.TempDir()
+	proj := project.Project{
+		Name: "hello",
+		Path: t.TempDir(),
+	}
 
-	err := Run(
-		project.Project{
-			Name: "hello",
-			Path: projectPath,
-		},
-		templates.Template{
-			Name: "example",
-		},
+	tmpl := templates.Template{
+		Name: "example",
+	}
+
+	err := setup.Run(
+		proj,
+		tmpl,
 		strings.NewReader(""),
 		&bytes.Buffer{},
 		&bytes.Buffer{},
@@ -202,6 +209,7 @@ write("../outside.txt", "nope")
 		)
 	}
 }
+
 func TestRunReturnsSetupError(t *testing.T) {
 	_, _, err := runTestSetup(
 		t,

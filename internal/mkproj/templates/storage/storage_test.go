@@ -1,4 +1,4 @@
-package templates
+package storage
 
 import (
 	"errors"

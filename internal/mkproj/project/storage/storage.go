@@ -1,4 +1,4 @@
-package project
+package storage
 
 import (
 	"fmt"
@@ -6,37 +6,38 @@ import (
 	"path/filepath"
 
 	"github.com/kulikov-andrej/mkproj/internal/libfs"
-	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/templates"
+	projectmodel "github.com/kulikov-andrej/mkproj/internal/mkproj/project/model"
+	templatemodel "github.com/kulikov-andrej/mkproj/internal/mkproj/templates/model"
 )
 
 func Create(
-	template templates.Template,
+	tmpl templatemodel.Template,
 	target string,
-) (Project, error) {
+) (projectmodel.Project, error) {
 	path, err := prepareTarget(target)
 	if err != nil {
-		return Project{}, err
+		return projectmodel.Project{}, err
 	}
 
 	if err := libfs.CopyTree(
-		template.Path,
+		tmpl.Path,
 		path,
 	); err != nil {
-		return Project{}, fmt.Errorf(
+		return projectmodel.Project{}, fmt.Errorf(
 			"copy template: %w",
 			err,
 		)
 	}
 
-	return Project{
+	return projectmodel.Project{
 		Name: filepath.Base(path),
 		Path: path,
 	}, nil
 }
 
-func CleanupMetadata(project Project) error {
+func CleanupMetadata(proj projectmodel.Project) error {
 	path := filepath.Join(
-		project.Path,
+		proj.Path,
 		".mkproj",
 	)
 

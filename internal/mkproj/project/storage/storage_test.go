@@ -1,11 +1,12 @@
-package project
+package storage
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/kulikov-andrej/mkproj/internal/mkproj/data/templates"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/project/model"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/templates"
 )
 
 func TestCreate(t *testing.T) {
@@ -26,18 +27,20 @@ func TestCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	tmpl := templates.Template{
+		Name: "example",
+		Path: templatePath,
+	}
+
 	got, err := Create(
-		templates.Template{
-			Name: "example",
-			Path: templatePath,
-		},
+		tmpl,
 		target,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedPath, err := filepath.Abs(target)
+	wantPath, err := filepath.Abs(target)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,10 +53,10 @@ func TestCreate(t *testing.T) {
 		)
 	}
 
-	if got.Path != expectedPath {
+	if got.Path != wantPath {
 		t.Fatalf(
 			"expected project path %q, got %q",
-			expectedPath,
+			wantPath,
 			got.Path,
 		)
 	}
@@ -65,14 +68,15 @@ func TestCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if string(content) != "hello" {
+	if got, want := string(content), "hello"; got != want {
 		t.Fatalf(
 			"expected %q, got %q",
-			"hello",
-			string(content),
+			want,
+			got,
 		)
 	}
 }
+
 func TestCreateRejectsNonEmptyTarget(t *testing.T) {
 	root := t.TempDir()
 
@@ -100,11 +104,13 @@ func TestCreateRejectsNonEmptyTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	tmpl := templates.Template{
+		Name: "example",
+		Path: templatePath,
+	}
+
 	_, err := Create(
-		templates.Template{
-			Name: "example",
-			Path: templatePath,
-		},
+		tmpl,
 		target,
 	)
 
@@ -117,10 +123,11 @@ func TestCreateRejectsNonEmptyTarget(t *testing.T) {
 		t.Fatal(readErr)
 	}
 
-	if string(content) != "keep me" {
+	if got, want := string(content), "keep me"; got != want {
 		t.Fatal("existing target content was modified")
 	}
 }
+
 func TestCreateRejectsFileTarget(t *testing.T) {
 	root := t.TempDir()
 
@@ -139,11 +146,13 @@ func TestCreateRejectsFileTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	tmpl := templates.Template{
+		Name: "example",
+		Path: templatePath,
+	}
+
 	_, err := Create(
-		templates.Template{
-			Name: "example",
-			Path: templatePath,
-		},
+		tmpl,
 		target,
 	)
 
@@ -151,6 +160,7 @@ func TestCreateRejectsFileTarget(t *testing.T) {
 		t.Fatal("expected an error")
 	}
 }
+
 func TestCleanupMetadata(t *testing.T) {
 	root := t.TempDir()
 
@@ -176,11 +186,12 @@ func TestCleanupMetadata(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := CleanupMetadata(Project{
+	proj := model.Project{
 		Name: "example",
 		Path: root,
-	})
-	if err != nil {
+	}
+
+	if err := CleanupMetadata(proj); err != nil {
 		t.Fatal(err)
 	}
 

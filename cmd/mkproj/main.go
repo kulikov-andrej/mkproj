@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kulikov-andrej/mkproj/internal/mkproj/interface/cli"
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/cli"
 )
 
 func main() {

@@ -1,3 +1,3 @@
-package templates
+package storage
 
 var resolveRoot = defaultRoot
