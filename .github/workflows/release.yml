@@ -60,7 +60,7 @@ jobs:
           chmod +x dist/mkproj-linux-amd64
 
           test "$(
-            ./dist/mkproj-linux-amd64 --version
+            ./dist/mkproj-linux-amd64 version
           )" = "mkproj $VERSION"
 
       - name: Publish release

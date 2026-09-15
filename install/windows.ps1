@@ -121,7 +121,7 @@ try {
         Write-Host "  $TemplatesDir"
     }
 
-    & $InstallPath --version
+    & $InstallPath version
 
     if (-not $AlreadyInPath) {
         Write-Host ""

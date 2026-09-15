@@ -121,7 +121,7 @@ if [[ ! -d "$TEMPLATES_DIR" ]]; then
     echo "  $TEMPLATES_DIR"
 fi
 
-"$INSTALL_PATH" --version
+"$INSTALL_PATH" version
 
 case ":${PATH}:" in
     *":${INSTALL_DIR}:"*)
