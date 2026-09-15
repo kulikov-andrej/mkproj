@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir -p dist
 
-          LDFLAGS="-X github.com/kulikov-andrej/mkproj/internal/buildinfo.Version=$VERSION"
+          LDFLAGS="-X github.com/kulikov-andrej/mkproj/internal/mkproj/buildinfo.Version=$VERSION"
 
           GOOS=windows GOARCH=amd64 \
             go build \
