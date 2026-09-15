@@ -21,19 +21,19 @@ curl -fsSL https://raw.githubusercontent.com/kulikov-andrej/mkproj/master/instal
 List templates:
 
 ```console
-mkproj -l
+mkproj template list
 ```
 
-Create a `hello_world` project from the `python` template:
+Create a `hello-world` project from the `python` template:
 
 ```console
-mkproj hello_world -t python
+mkproj hello-world -t python
 ```
 
-Create and open a `cpp_tutorial` project from the `cpp` template:
+Create and open a `cpp-tutorial` project from the `cpp` template:
 
 ```console
-mkproj cpp_tutorial -t cpp -o
+mkproj cpp-tutorial -t cpp -o
 ```
 
 Create a project in the current directory:

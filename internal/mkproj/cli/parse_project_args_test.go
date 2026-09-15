@@ -2,11 +2,11 @@ package cli
 
 import "testing"
 
-func TestParseArgs(t *testing.T) {
+func TestParseProjectArgs(t *testing.T) {
 	tests := []struct {
 		name string
 		args []string
-		want options
+		want projectArgs
 	}{
 		{
 			name: "short template",
@@ -15,7 +15,7 @@ func TestParseArgs(t *testing.T) {
 				"-t",
 				"example",
 			},
-			want: options{
+			want: projectArgs{
 				template: "example",
 				target:   "dev",
 			},
@@ -27,7 +27,7 @@ func TestParseArgs(t *testing.T) {
 				"example",
 				"dev",
 			},
-			want: options{
+			want: projectArgs{
 				template: "example",
 				target:   "dev",
 			},
@@ -38,7 +38,7 @@ func TestParseArgs(t *testing.T) {
 				"dev",
 				"--template=example",
 			},
-			want: options{
+			want: projectArgs{
 				template: "example",
 				target:   "dev",
 			},
@@ -50,53 +50,17 @@ func TestParseArgs(t *testing.T) {
 				"--template=example",
 				"-o",
 			},
-			want: options{
+			want: projectArgs{
 				template: "example",
 				target:   "dev",
 				open:     true,
-			},
-		},
-		{
-			name: "list",
-			args: []string{
-				"--list",
-			},
-			want: options{
-				list: true,
-			},
-		},
-		{
-			name: "help",
-			args: []string{
-				"-h",
-			},
-			want: options{
-				help: true,
-			},
-		},
-		{
-			name: "version",
-			args: []string{
-				"-v",
-			},
-			want: options{
-				version: true,
-			},
-		},
-		{
-			name: "long version",
-			args: []string{
-				"--version",
-			},
-			want: options{
-				version: true,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseArgs(tt.args)
+			got, err := parseProjectArgs(tt.args)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -112,7 +76,7 @@ func TestParseArgs(t *testing.T) {
 	}
 }
 
-func TestParseArgsErrors(t *testing.T) {
+func TestParseProjectArgsErrors(t *testing.T) {
 	tests := []struct {
 		name string
 		args []string
@@ -166,7 +130,7 @@ func TestParseArgsErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseArgs(tt.args)
+			_, err := parseProjectArgs(tt.args)
 
 			if err == nil {
 				t.Fatal("expected an error")

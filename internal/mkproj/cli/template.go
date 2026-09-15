@@ -5,6 +5,23 @@ import (
 	"io"
 )
 
+func runTemplate(
+	args []string,
+	stdout io.Writer,
+	stderr io.Writer,
+) error {
+	if len(args) == 0 {
+		showTemplateHelp(stdout)
+		return nil
+	}
+
+	if args[0] == "list" {
+		return runTemplateList(stdout, stderr)
+	}
+
+	return nil
+}
+
 func runTemplateList(
 	stdout io.Writer,
 	stderr io.Writer,
@@ -24,4 +41,12 @@ func runTemplateList(
 	}
 
 	return nil
+}
+
+func showTemplateHelp(stdout io.Writer) {
+	fmt.Fprintln(stdout, `Usage:
+  mkproj template <command> [<args>]
+
+Commands:
+  list                       List available templates`)
 }

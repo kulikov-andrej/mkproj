@@ -10,28 +10,22 @@ func Run(
 	stdout io.Writer,
 	stderr io.Writer,
 ) error {
-	opts, err := parseArgs(args)
-	if err != nil {
-		return err
-	}
-
-	switch {
-	case len(args) == 0 || opts.help:
+	if len(args) == 0 {
 		showHelp(stdout)
 		return nil
+	}
 
-	case opts.version:
+	switch args[0] {
+	case "help":
+		return runHelp(args[1:], stdout)
+
+	case "version":
 		return runVersion(stdout)
 
-	case opts.list:
-		return runTemplateList(stdout, stderr)
+	case "template":
+		return runTemplate(args[1:], stdout, stderr)
 
 	default:
-		return runProject(
-			opts,
-			stdin,
-			stdout,
-			stderr,
-		)
+		return runProject(args, stdin, stdout, stderr)
 	}
 }
