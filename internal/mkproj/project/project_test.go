@@ -3,10 +3,14 @@ package project
 import (
 	"bytes"
 	"errors"
-	"io"
+	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/kulikov-andrej/mkproj/internal/mkproj/project/scripts"
 	"github.com/kulikov-andrej/mkproj/internal/mkproj/templates"
+	"go.starlark.net/starlark"
 )
 
 func resetDependencies(t *testing.T) {
@@ -14,14 +18,18 @@ func resetDependencies(t *testing.T) {
 
 	oldGetTemplate := getTemplate
 	oldCreateProject := createProject
-	oldRunSetup := runSetup
+	oldGetCurrentProject := getCurrentProject
+	oldLoadScript := loadScript
+	oldCallScript := callScript
 	oldCleanupMetadata := cleanupMetadata
 	oldOpenEditor := openEditor
 
 	t.Cleanup(func() {
 		getTemplate = oldGetTemplate
 		createProject = oldCreateProject
-		runSetup = oldRunSetup
+		getCurrentProject = oldGetCurrentProject
+		loadScript = oldLoadScript
+		callScript = oldCallScript
 		cleanupMetadata = oldCleanupMetadata
 		openEditor = oldOpenEditor
 	})
@@ -39,6 +47,10 @@ func TestCreate(t *testing.T) {
 		Name: "hello",
 		Path: "target",
 	}
+
+	stdin := &bytes.Buffer{}
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
 
 	var calls []string
 
@@ -81,32 +93,63 @@ func TestCreate(t *testing.T) {
 		return proj, nil
 	}
 
-	runSetup = func(
-		gotProj Project,
-		gotTmpl templates.Template,
-		_ io.Reader,
-		_ io.Writer,
-		_ io.Writer,
-	) error {
+	loadScript = func(
+		path string,
+		ctx scripts.Context,
+	) (starlark.StringDict, error) {
 		calls = append(calls, "setup")
 
-		if gotProj != proj {
+		wantPath := filepath.Join(
+			proj.Path,
+			".mkproj",
+			"setup.star",
+		)
+
+		if path != wantPath {
 			t.Fatalf(
-				"expected project %#v, got %#v",
-				proj,
-				gotProj,
+				"expected script path %q, got %q",
+				wantPath,
+				path,
 			)
 		}
 
-		if gotTmpl != tmpl {
+		if ctx.ProjectName != proj.Name {
 			t.Fatalf(
-				"expected template %#v, got %#v",
-				tmpl,
-				gotTmpl,
+				"expected project name %q, got %q",
+				proj.Name,
+				ctx.ProjectName,
 			)
 		}
 
-		return nil
+		if ctx.ProjectPath != proj.Path {
+			t.Fatalf(
+				"expected project path %q, got %q",
+				proj.Path,
+				ctx.ProjectPath,
+			)
+		}
+
+		if ctx.TemplateName != tmpl.Name {
+			t.Fatalf(
+				"expected template name %q, got %q",
+				tmpl.Name,
+				ctx.TemplateName,
+			)
+		}
+
+		if ctx.Stdin != stdin {
+			t.Fatal("unexpected stdin")
+		}
+
+		if ctx.Stdout != stdout {
+			t.Fatal("unexpected stdout")
+		}
+
+		if ctx.Stderr != stderr {
+			t.Fatal("unexpected stderr")
+		}
+
+		return starlark.StringDict{}, nil
 	}
 
 	cleanupMetadata = func(gotProj Project) error {
@@ -126,9 +169,9 @@ func TestCreate(t *testing.T) {
 	got, err := Create(
 		tmpl.Name,
 		"hello",
-		&bytes.Buffer{},
-		&bytes.Buffer{},
-		&bytes.Buffer{},
+		stdin,
+		stdout,
+		stderr,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -149,22 +192,12 @@ func TestCreate(t *testing.T) {
 		"cleanup",
 	}
 
-	if len(calls) != len(wantCalls) {
+	if !reflect.DeepEqual(calls, wantCalls) {
 		t.Fatalf(
 			"expected calls %v, got %v",
 			wantCalls,
 			calls,
 		)
-	}
-
-	for i := range wantCalls {
-		if calls[i] != wantCalls[i] {
-			t.Fatalf(
-				"expected calls %v, got %v",
-				wantCalls,
-				calls,
-			)
-		}
 	}
 }
 
@@ -222,15 +255,12 @@ func TestCreateStopsOnCreateError(t *testing.T) {
 		return Project{}, wantErr
 	}
 
-	runSetup = func(
-		Project,
-		templates.Template,
-		io.Reader,
-		io.Writer,
-		io.Writer,
-	) error {
+	loadScript = func(
+		string,
+		scripts.Context,
+	) (starlark.StringDict, error) {
 		t.Fatal("setup should not be called")
-		return nil
+		return nil, nil
 	}
 
 	_, err := Create(
@@ -275,14 +305,11 @@ func TestCreateCleansUpAfterSetupError(t *testing.T) {
 		return proj, nil
 	}
 
-	runSetup = func(
-		Project,
-		templates.Template,
-		io.Reader,
-		io.Writer,
-		io.Writer,
-	) error {
-		return setupErr
+	loadScript = func(
+		string,
+		scripts.Context,
+	) (starlark.StringDict, error) {
+		return nil, setupErr
 	}
 
 	cleaned := false
@@ -338,14 +365,11 @@ func TestCreateReturnsCleanupError(t *testing.T) {
 		return proj, nil
 	}
 
-	runSetup = func(
-		Project,
-		templates.Template,
-		io.Reader,
-		io.Writer,
-		io.Writer,
-	) error {
-		return nil
+	loadScript = func(
+		string,
+		scripts.Context,
+	) (starlark.StringDict, error) {
+		return starlark.StringDict{}, nil
 	}
 
 	cleanupMetadata = func(Project) error {
@@ -366,6 +390,177 @@ func TestCreateReturnsCleanupError(t *testing.T) {
 			wantErr,
 			err,
 		)
+	}
+}
+
+func TestWorkflowCommands(t *testing.T) {
+	resetDependencies(t)
+
+	proj := Project{
+		Name: "hello",
+		Path: "target",
+	}
+
+	loadScript = func(
+		path string,
+		ctx scripts.Context,
+	) (starlark.StringDict, error) {
+		wantPath := filepath.Join(
+			proj.Path,
+			".mkproj",
+			"workflow.star",
+		)
+		if path != wantPath {
+			t.Fatalf("expected path %q, got %q", wantPath, path)
+		}
+
+		if ctx.ProjectName != proj.Name || ctx.ProjectPath != proj.Path {
+			t.Fatalf("unexpected context: %#v", ctx)
+		}
+
+		return starlark.StringDict{
+			"test":  starlark.NewBuiltin("test", nil),
+			"value": starlark.String("not a command"),
+			"build": starlark.NewBuiltin("build", nil),
+		}, nil
+	}
+
+	commands, err := WorkflowCommands(
+		proj,
+		strings.NewReader(""),
+		&bytes.Buffer{},
+		&bytes.Buffer{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []string{"build", "test"}
+	if !reflect.DeepEqual(commands, want) {
+		t.Fatalf("expected commands %v, got %v", want, commands)
+	}
+}
+
+func TestRunWorkflow(t *testing.T) {
+	resetDependencies(t)
+
+	proj := Project{
+		Name: "hello",
+		Path: "target",
+	}
+
+	stdin := strings.NewReader("")
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	fn := starlark.NewBuiltin("build", nil)
+
+	loadScript = func(
+		path string,
+		ctx scripts.Context,
+	) (starlark.StringDict, error) {
+		wantPath := filepath.Join(
+			proj.Path,
+			".mkproj",
+			"workflow.star",
+		)
+		if path != wantPath {
+			t.Fatalf("expected path %q, got %q", wantPath, path)
+		}
+
+		if ctx.Stdin != stdin || ctx.Stdout != stdout || ctx.Stderr != stderr {
+			t.Fatal("unexpected workflow streams")
+		}
+
+		return starlark.StringDict{
+			"build": fn,
+		}, nil
+	}
+
+	called := false
+
+	callScript = func(
+		gotFn starlark.Callable,
+		ctx scripts.Context,
+	) error {
+		called = true
+
+		if gotFn != fn {
+			t.Fatal("unexpected callable")
+		}
+
+		if ctx.ProjectName != proj.Name || ctx.ProjectPath != proj.Path {
+			t.Fatalf("unexpected context: %#v", ctx)
+		}
+
+		return nil
+	}
+
+	if err := RunWorkflow(
+		proj,
+		"build",
+		stdin,
+		stdout,
+		stderr,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	if !called {
+		t.Fatal("script callable was not called")
+	}
+}
+
+func TestRunWorkflowCommandNotFound(t *testing.T) {
+	resetDependencies(t)
+
+	loadScript = func(
+		string,
+		scripts.Context,
+	) (starlark.StringDict, error) {
+		return starlark.StringDict{}, nil
+	}
+
+	err := RunWorkflow(
+		Project{Path: "target"},
+		"missing",
+		strings.NewReader(""),
+		&bytes.Buffer{},
+		&bytes.Buffer{},
+	)
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+
+	if !strings.Contains(err.Error(), `workflow command "missing" not found`) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRunWorkflowCommandMustBeCallable(t *testing.T) {
+	resetDependencies(t)
+
+	loadScript = func(
+		string,
+		scripts.Context,
+	) (starlark.StringDict, error) {
+		return starlark.StringDict{
+			"build": starlark.String("nope"),
+		}, nil
+	}
+
+	err := RunWorkflow(
+		Project{Path: "target"},
+		"build",
+		strings.NewReader(""),
+		&bytes.Buffer{},
+		&bytes.Buffer{},
+	)
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+
+	if !strings.Contains(err.Error(), `workflow command "build" is not callable`) {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

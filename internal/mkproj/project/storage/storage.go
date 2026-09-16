@@ -35,17 +35,78 @@ func Create(
 	}, nil
 }
 
+func GetCurrentProject() (projectmodel.Project, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return projectmodel.Project{}, err
+	}
+
+	for {
+		metadataPath := filepath.Join(dir, ".mkproj")
+		info, err := os.Stat(metadataPath)
+
+		if err == nil && info.IsDir() {
+			return projectmodel.Project{
+				Name: filepath.Base(dir),
+				Path: dir,
+			}, nil
+		}
+
+		if err != nil && !os.IsNotExist(err) {
+			return projectmodel.Project{}, fmt.Errorf(
+				"access project metadata: %w",
+				err,
+			)
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+
+		dir = parent
+	}
+
+	return projectmodel.Project{}, fmt.Errorf("not inside an mkproj project")
+}
+
 func CleanupMetadata(proj projectmodel.Project) error {
-	path := filepath.Join(
+	metadataPath := filepath.Join(
 		proj.Path,
 		".mkproj",
 	)
 
-	if err := os.RemoveAll(path); err != nil {
+	setupPath := filepath.Join(
+		metadataPath,
+		"setup.star",
+	)
+
+	if err := os.RemoveAll(setupPath); err != nil {
 		return fmt.Errorf(
-			"remove project metadata: %w",
+			"remove setup metadata: %w",
 			err,
 		)
+	}
+
+	entries, err := os.ReadDir(metadataPath)
+	if os.IsNotExist(err) {
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf(
+			"read project metadata: %w",
+			err,
+		)
+	}
+
+	if len(entries) == 0 {
+		if err := os.Remove(metadataPath); err != nil {
+			return fmt.Errorf(
+				"remove empty project metadata: %w",
+				err,
+			)
+		}
 	}
 
 	return nil

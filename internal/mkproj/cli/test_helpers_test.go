@@ -18,11 +18,17 @@ func resetDependencies(t *testing.T) {
 	oldListTemplates := listTemplates
 	oldCreateProject := createProject
 	oldOpenProject := openProject
+	oldGetCurrentProject := getCurrentProject
+	oldListWorkflowCommands := listWorkflowCommands
+	oldRunProjectWorkflow := runProjectWorkflow
 
 	t.Cleanup(func() {
 		listTemplates = oldListTemplates
 		createProject = oldCreateProject
 		openProject = oldOpenProject
+		getCurrentProject = oldGetCurrentProject
+		listWorkflowCommands = oldListWorkflowCommands
+		runProjectWorkflow = oldRunProjectWorkflow
 	})
 }
 

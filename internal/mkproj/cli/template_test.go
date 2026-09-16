@@ -69,3 +69,27 @@ func TestRunTemplateListEmpty(t *testing.T) {
 		t.Fatalf("expected stderr %q, got %q", want, got.stderr)
 	}
 }
+
+func TestRunTemplateRejectsUnknownCommand(t *testing.T) {
+	got := runCLI("template", "what")
+
+	if got.err == nil {
+		t.Fatal("expected an error")
+	}
+
+	if !strings.Contains(got.err.Error(), `unknown template command "what"`) {
+		t.Fatalf("unexpected error: %v", got.err)
+	}
+}
+
+func TestRunTemplateListRejectsExtraArguments(t *testing.T) {
+	got := runCLI("template", "list", "what")
+
+	if got.err == nil {
+		t.Fatal("expected an error")
+	}
+
+	if !strings.Contains(got.err.Error(), `unexpected argument "what"`) {
+		t.Fatalf("unexpected error: %v", got.err)
+	}
+}

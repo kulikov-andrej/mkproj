@@ -25,6 +25,9 @@ func Run(
 	case "template":
 		return runTemplate(args[1:], stdout, stderr)
 
+	case "run":
+		return runWorkflow(args[1:], stdin, stdout, stderr)
+
 	default:
 		return runProject(args, stdin, stdout, stderr)
 	}

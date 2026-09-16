@@ -24,6 +24,10 @@ func runHelp(args []string, stdout io.Writer) error {
 		showTemplateHelp(stdout)
 		return nil
 
+	case "run":
+		showRunHelp(stdout)
+		return nil
+
 	default:
 		return fmt.Errorf("unknown help topic %q", args[0])
 	}
@@ -38,10 +42,12 @@ Commands:
   help       Show help
   version    Show version
   template   Manage templates
+  run        Run project workflow
 
 Help topics:
   project    Project creation
-  template   Template commands`)
+  template   Template commands
+  run        Project workflow`)
 
 	fmt.Fprintln(stdout)
 	fmt.Fprintln(stdout, "Run `mkproj help <topic>` for more information.")

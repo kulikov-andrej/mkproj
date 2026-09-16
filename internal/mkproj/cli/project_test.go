@@ -164,3 +164,154 @@ func TestRunProjectDoesNotOpenAfterCreateError(t *testing.T) {
 		t.Fatalf("expected %v, got %v", expected, got.err)
 	}
 }
+
+func TestRunWorkflowHelpOutsideProject(t *testing.T) {
+	resetDependencies(t)
+
+	getCurrentProject = func() (project.Project, error) {
+		return project.Project{}, errors.New("not a project")
+	}
+
+	listWorkflowCommands = func(
+		project.Project,
+		io.Reader,
+		io.Writer,
+		io.Writer,
+	) ([]string, error) {
+		t.Fatal("workflow commands should not be loaded")
+		return nil, nil
+	}
+
+	got := runCLI("run")
+	if got.err != nil {
+		t.Fatal(got.err)
+	}
+
+	if got.stdout != "Usage:\n  mkproj run <command>\n" {
+		t.Fatalf("unexpected stdout: %q", got.stdout)
+	}
+}
+
+func TestRunWorkflowHelpShowsProjectCommands(t *testing.T) {
+	resetDependencies(t)
+
+	proj := project.Project{
+		Name: "hello",
+		Path: "project/path",
+	}
+
+	getCurrentProject = func() (project.Project, error) {
+		return proj, nil
+	}
+
+	listWorkflowCommands = func(
+		gotProj project.Project,
+		_ io.Reader,
+		_ io.Writer,
+		_ io.Writer,
+	) ([]string, error) {
+		if gotProj != proj {
+			t.Fatalf("expected project %#v, got %#v", proj, gotProj)
+		}
+
+		return []string{"build", "test"}, nil
+	}
+
+	got := runCLI("run")
+	if got.err != nil {
+		t.Fatal(got.err)
+	}
+
+	want := "Usage:\n  mkproj run <command>\n\nCommands:\n  build\n  test\n"
+	if got.stdout != want {
+		t.Fatalf("expected stdout %q, got %q", want, got.stdout)
+	}
+}
+
+func TestRunWorkflowCommand(t *testing.T) {
+	resetDependencies(t)
+
+	proj := project.Project{
+		Name: "hello",
+		Path: "project/path",
+	}
+
+	getCurrentProject = func() (project.Project, error) {
+		return proj, nil
+	}
+
+	called := false
+
+	runProjectWorkflow = func(
+		gotProj project.Project,
+		command string,
+		_ io.Reader,
+		_ io.Writer,
+		_ io.Writer,
+	) error {
+		called = true
+
+		if gotProj != proj {
+			t.Fatalf("expected project %#v, got %#v", proj, gotProj)
+		}
+
+		if command != "debug" {
+			t.Fatalf("expected command %q, got %q", "debug", command)
+		}
+
+		return nil
+	}
+
+	got := runCLI("run", "debug")
+	if got.err != nil {
+		t.Fatal(got.err)
+	}
+
+	if !called {
+		t.Fatal("project workflow was not called")
+	}
+}
+
+func TestRunWorkflowCommandRequiresProject(t *testing.T) {
+	resetDependencies(t)
+
+	wantErr := errors.New("not a project")
+
+	getCurrentProject = func() (project.Project, error) {
+		return project.Project{}, wantErr
+	}
+
+	runProjectWorkflow = func(
+		project.Project,
+		string,
+		io.Reader,
+		io.Writer,
+		io.Writer,
+	) error {
+		t.Fatal("project workflow should not be called")
+		return nil
+	}
+
+	got := runCLI("run", "debug")
+	if !errors.Is(got.err, wantErr) {
+		t.Fatalf("expected %v, got %v", wantErr, got.err)
+	}
+}
+
+func TestRunWorkflowRejectsExtraArguments(t *testing.T) {
+	resetDependencies(t)
+
+	getCurrentProject = func() (project.Project, error) {
+		t.Fatal("project should not be resolved")
+		return project.Project{}, nil
+	}
+
+	got := runCLI("run", "debug", "extra")
+	if got.err == nil {
+		t.Fatal("expected an error")
+	}
+
+	if !strings.Contains(got.err.Error(), `unexpected argument "extra"`) {
+		t.Fatalf("unexpected error: %v", got.err)
+	}
+}

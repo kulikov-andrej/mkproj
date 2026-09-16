@@ -15,11 +15,17 @@ func runTemplate(
 		return nil
 	}
 
-	if args[0] == "list" {
-		return runTemplateList(stdout, stderr)
-	}
+	switch args[0] {
+	case "list":
+		if len(args) > 1 {
+			return fmt.Errorf("unexpected argument %q", args[1])
+		}
 
-	return nil
+		return runTemplateList(stdout, stderr)
+
+	default:
+		return fmt.Errorf("unknown template command %q", args[0])
+	}
 }
 
 func runTemplateList(

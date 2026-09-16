@@ -6,7 +6,10 @@ import (
 )
 
 var (
-	listTemplates = templates.List
-	createProject = project.Create
-	openProject   = project.Open
+	listTemplates        = templates.List
+	createProject        = project.Create
+	openProject          = project.Open
+	getCurrentProject    = project.GetCurrent
+	listWorkflowCommands = project.WorkflowCommands
+	runProjectWorkflow   = project.RunWorkflow
 )
