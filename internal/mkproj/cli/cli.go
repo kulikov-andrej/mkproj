@@ -17,6 +17,9 @@ func Run(
 	case "help":
 		return runHelp(args[1:], streams)
 
+	case "version":
+		return runVersion(streams)
+
 	case "template":
 		return runTemplate(args[1:], streams)
 

@@ -37,6 +37,7 @@ func showHelp(
 
 Commands:
   help       Show help
+  version    Show version
   template   Manage templates
 
 Help topics:
