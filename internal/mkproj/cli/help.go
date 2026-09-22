@@ -21,6 +21,8 @@ func runHelp(
 		showProjectHelp(streams)
 	case "template":
 		showTemplateHelp(streams)
+	case "run":
+		showWorkflowHelp(streams)
 	default:
 		return fmt.Errorf("unknown topic %q", topic)
 	}
@@ -39,10 +41,12 @@ Commands:
   help       Show help
   version    Show version
   template   Manage templates
+  run        Run project workflow
 
 Help topics:
   project    Project creation
-  template   Template commands`)
+  template   Template commands
+  run        Project workflow`)
 
 	fmt.Fprintln(streams.Out)
 	fmt.Fprintln(streams.Out, "Run `mkproj help <topic>` for more information.")

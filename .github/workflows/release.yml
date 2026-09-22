@@ -43,10 +43,15 @@ jobs:
 
             for target in windows linux darwin; do
               suffix=
-              [[ $target == windows ]] && suffix=.exe
-              GOOS=$target GOARCH=amd64 go build \
-              -trimpath -ldflags="$LDFLAGS" \
-              -o "dist/mkproj-$target-amd64$suffix" ./cmd/mkproj
+              [[ $GOOS == windows ]] && suffix=.exe
+
+              GOOS="$GOOS" GOARCH="$GOARCH" go build \
+                -trimpath -ldflags="$LDFLAGS" \
+                -o "dist/mkproj-$GOOS-$GOARCH$suffix" ./cmd/mkproj
+
+              GOOS="$GOOS" GOARCH="$GOARCH" go build \
+                -trimpath \
+                -o "dist/mkproj-install-$GOOS-$GOARCH$suffix" ./cmd/mkproj-install
             done
 
         - name: Verify version

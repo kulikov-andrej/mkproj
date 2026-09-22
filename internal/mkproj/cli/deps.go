@@ -9,4 +9,7 @@ var (
 	listTemplates = templates.ListTemplates
 	createProject = project.Create
 	openProject   = project.Open
+	getProject    = project.GetCurrent
+	listWorkflow  = project.WorkflowCommands
+	runWorkflowFn = project.RunWorkflow
 )

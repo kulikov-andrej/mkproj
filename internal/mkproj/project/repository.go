@@ -34,6 +34,37 @@ func createProject(
 	}, nil
 }
 
+func GetCurrent() (Project, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return Project{}, err
+	}
+
+	for {
+		metadataPath := filepath.Join(dir, ".mkproj")
+		info, err := os.Stat(metadataPath)
+		if err == nil && info.IsDir() {
+			return Project{
+				Name: filepath.Base(dir),
+				Path: dir,
+			}, nil
+		}
+
+		if err != nil && !os.IsNotExist(err) {
+			return Project{}, fmt.Errorf("access project metadata: %w", err)
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+
+		dir = parent
+	}
+
+	return Project{}, fmt.Errorf("not inside an mkproj project")
+}
+
 func prepareTarget(target string) (string, error) {
 	if target == "" {
 		return "", fmt.Errorf(

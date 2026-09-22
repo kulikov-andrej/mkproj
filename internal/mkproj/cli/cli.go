@@ -23,6 +23,9 @@ func Run(
 	case "template":
 		return runTemplate(args[1:], streams)
 
+	case "run":
+		return runWorkflow(args[1:], streams)
+
 	default:
 		return runProject(args, streams)
 	}
