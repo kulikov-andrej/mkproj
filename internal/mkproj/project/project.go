@@ -18,5 +18,15 @@ func Create(
 	if err != nil {
 		return Project{}, err
 	}
+
+	setupErr := runSetup(proj, template, streams)
+	cleanupErr := cleanupSetup(proj)
+	if setupErr != nil {
+		return Project{}, setupErr
+	}
+	if cleanupErr != nil {
+		return Project{}, cleanupErr
+	}
+
 	return proj, nil
 }

@@ -6,4 +6,5 @@ import (
 
 var (
 	findTemplate = templates.FindTemplate
+	runSetup     = runTemplateSetup
 )
