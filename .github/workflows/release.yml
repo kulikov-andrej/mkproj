@@ -11,16 +11,16 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    
+
     steps:
         - name: Checkout code
           uses: actions/checkout@v7
-        
+
         - name: Set up Go
           uses: actions/setup-go@v7
           with:
             go-version-file: go.mod
-        
+
         - name: Resolve version
           run: |
             if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -29,7 +29,7 @@ jobs:
             fi
 
             echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-        
+
         - name: Test
           run: go test -v ./...
 
@@ -41,12 +41,25 @@ jobs:
 
             LDFLAGS="-X github.com/kulikov-andrej/mkproj/internal/mkproj/buildinfo.Version=$VERSION"
 
-            for target in windows linux darwin; do
+            for target in \
+              windows/amd64 \
+              linux/amd64 \
+              darwin/amd64 \
+              darwin/arm64
+            do
+              GOOS=${target%/*}
+              GOARCH=${target#*/}
+
               suffix=
-              [[ $target == windows ]] && suffix=.exe
-              GOOS=$target GOARCH=amd64 go build \
-              -trimpath -ldflags="$LDFLAGS" \
-              -o "dist/mkproj-$target-amd64$suffix" ./cmd/mkproj
+              [[ $GOOS == windows ]] && suffix=.exe
+
+              GOOS="$GOOS" GOARCH="$GOARCH" go build \
+                -trimpath -ldflags="$LDFLAGS" \
+                -o "dist/mkproj-$GOOS-$GOARCH$suffix" ./cmd/mkproj
+
+              GOOS="$GOOS" GOARCH="$GOARCH" go build \
+                -trimpath \
+                -o "dist/mkproj-install-$GOOS-$GOARCH$suffix" ./cmd/mkproj-install
             done
 
         - name: Verify version
@@ -56,15 +69,20 @@ jobs:
             test "$(
                 ./dist/mkproj-linux-amd64 version
             )" = "mkproj $VERSION"
-        
+
         - name: Publish release
           env:
             GH_TOKEN: ${{ github.token }}
           run: |
             gh release create "$GITHUB_REF_NAME" \
-                dist/mkproj-windows-amd64.exe \
-                dist/mkproj-linux-amd64 \
-                dist/mkproj-darwin-amd64 \
-                --verify-tag \
-                --generate-notes \
-                --title "$GITHUB_REF_NAME"
+              dist/mkproj-windows-amd64.exe \
+              dist/mkproj-linux-amd64 \
+              dist/mkproj-darwin-amd64 \
+              dist/mkproj-darwin-arm64 \
+              dist/mkproj-install-windows-amd64.exe \
+              dist/mkproj-install-linux-amd64 \
+              dist/mkproj-install-darwin-amd64 \
+              dist/mkproj-install-darwin-arm64 \
+              --verify-tag \
+              --generate-notes \
+              --title "$GITHUB_REF_NAME"
