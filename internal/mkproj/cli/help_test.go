@@ -14,6 +14,7 @@ func TestRunHelp(t *testing.T) {
 		{name: "main", args: nil, contain: "Help topics:"},
 		{name: "project", args: []string{"project"}, contain: "Project path (default: current directory)"},
 		{name: "template", args: []string{"template"}, contain: "List available templates"},
+		{name: "run", args: []string{"run"}, contain: "mkproj run <command>"},
 	}
 
 	for _, tt := range tests {
