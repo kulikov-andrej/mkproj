@@ -60,6 +60,78 @@ func ListTemplates() ([]Template, error) {
 	return result, nil
 }
 
+const starterTemplateName = "starter"
+
+func InstallStarter() (Template, bool, error) {
+	root, err := resolveRoot()
+	if err != nil {
+		return Template{}, false, err
+	}
+
+	template := Template{
+		Name: starterTemplateName,
+		Path: filepath.Join(root, starterTemplateName),
+	}
+
+	info, err := os.Stat(template.Path)
+	if err == nil {
+		if !info.IsDir() {
+			return Template{}, false, fmt.Errorf("starter template path is not a directory")
+		}
+		return template, false, nil
+	}
+	if !os.IsNotExist(err) {
+		return Template{}, false, fmt.Errorf("access starter template: %w", err)
+	}
+
+	if err := os.MkdirAll(filepath.Join(template.Path, ".mkproj"), 0o755); err != nil {
+		return Template{}, false, fmt.Errorf("create starter template: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Join(template.Path, "src"), 0o755); err != nil {
+		return Template{}, false, fmt.Errorf("create starter template: %w", err)
+	}
+
+	files := map[string]string{
+		"README.md":                      "# {{PROJECT_NAME}}\n\nGenerated with the mkproj starter template.\n",
+		filepath.Join("src", "main.txt"): "Hello from {{PROJECT_NAME}}!\n",
+		filepath.Join(".mkproj", "setup.star"): `replace("README.md", "{{PROJECT_NAME}}", project.name)
+replace("src/main.txt", "{{PROJECT_NAME}}", project.name)
+`,
+	}
+	for name, content := range files {
+		if err := os.WriteFile(filepath.Join(template.Path, name), []byte(content), 0o644); err != nil {
+			_ = os.RemoveAll(template.Path)
+			return Template{}, false, fmt.Errorf("write starter template: %w", err)
+		}
+	}
+
+	return template, true, nil
+}
+
+func UninstallStarter() (Template, bool, error) {
+	root, err := resolveRoot()
+	if err != nil {
+		return Template{}, false, err
+	}
+
+	template := Template{
+		Name: starterTemplateName,
+		Path: filepath.Join(root, starterTemplateName),
+	}
+
+	if _, err := os.Stat(template.Path); os.IsNotExist(err) {
+		return template, false, nil
+	} else if err != nil {
+		return Template{}, false, fmt.Errorf("access starter template: %w", err)
+	}
+
+	if err := os.RemoveAll(template.Path); err != nil {
+		return Template{}, false, fmt.Errorf("remove starter template: %w", err)
+	}
+
+	return template, true, nil
+}
+
 func FindTemplate(
 	name string,
 ) (Template, error) {
