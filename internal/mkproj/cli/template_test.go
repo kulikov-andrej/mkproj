@@ -87,3 +87,123 @@ func TestRunTemplateRejectsInvalidCommand(t *testing.T) {
 		}
 	}
 }
+
+func TestRunTemplateInit(t *testing.T) {
+	old := installStarterTemplate
+	installStarterTemplate = func() (templates.Template, bool, error) {
+		return templates.Template{Path: "/templates/starter"}, true, nil
+	}
+	t.Cleanup(func() { installStarterTemplate = old })
+
+	streams, out, errOut := testStreams()
+	if err := runTemplate([]string{"init"}, streams); err != nil {
+		t.Fatalf("runTemplate() error = %v", err)
+	}
+	if got, want := out.String(), "Created starter template: \n  /templates/starter\n"; got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+	if errOut.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", errOut.String())
+	}
+}
+
+func TestRunTemplateInitExisting(t *testing.T) {
+	old := installStarterTemplate
+	installStarterTemplate = func() (templates.Template, bool, error) {
+		return templates.Template{Path: "/templates/starter"}, false, nil
+	}
+	t.Cleanup(func() { installStarterTemplate = old })
+
+	streams, out, errOut := testStreams()
+	if err := runTemplate([]string{"init"}, streams); err != nil {
+		t.Fatalf("runTemplate() error = %v", err)
+	}
+	if got, want := out.String(), "Starter template is already installed: \n  /templates/starter\n"; got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+	if errOut.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", errOut.String())
+	}
+}
+
+func TestRunTemplateInitReturnsError(t *testing.T) {
+	wantErr := errors.New("init failed")
+	old := installStarterTemplate
+	installStarterTemplate = func() (templates.Template, bool, error) {
+		return templates.Template{}, false, wantErr
+	}
+	t.Cleanup(func() { installStarterTemplate = old })
+
+	streams, _, _ := testStreams()
+	err := runTemplate([]string{"init"}, streams)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("runTemplate() error = %v, want %v", err, wantErr)
+	}
+}
+
+func TestRunTemplateDeinit(t *testing.T) {
+	old := uninstallStarterTemplate
+	uninstallStarterTemplate = func() (templates.Template, bool, error) {
+		return templates.Template{Path: "/templates/starter"}, true, nil
+	}
+	t.Cleanup(func() { uninstallStarterTemplate = old })
+
+	streams, out, errOut := testStreams()
+	if err := runTemplate([]string{"deinit"}, streams); err != nil {
+		t.Fatalf("runTemplate() error = %v", err)
+	}
+	if got, want := out.String(), "Removed starter template: \n  /templates/starter\n"; got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+	if errOut.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", errOut.String())
+	}
+}
+
+func TestRunTemplateDeinitMissing(t *testing.T) {
+	old := uninstallStarterTemplate
+	uninstallStarterTemplate = func() (templates.Template, bool, error) {
+		return templates.Template{Path: "/templates/starter"}, false, nil
+	}
+	t.Cleanup(func() { uninstallStarterTemplate = old })
+
+	streams, out, errOut := testStreams()
+	if err := runTemplate([]string{"deinit"}, streams); err != nil {
+		t.Fatalf("runTemplate() error = %v", err)
+	}
+	if got, want := out.String(), "Starter template is not installed.\n"; got != want {
+		t.Fatalf("stdout = %q, want %q", got, want)
+	}
+	if errOut.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", errOut.String())
+	}
+}
+
+func TestRunTemplateDeinitReturnsError(t *testing.T) {
+	wantErr := errors.New("deinit failed")
+	old := uninstallStarterTemplate
+	uninstallStarterTemplate = func() (templates.Template, bool, error) {
+		return templates.Template{}, false, wantErr
+	}
+	t.Cleanup(func() { uninstallStarterTemplate = old })
+
+	streams, _, _ := testStreams()
+	err := runTemplate([]string{"deinit"}, streams)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("runTemplate() error = %v, want %v", err, wantErr)
+	}
+}
+
+func TestRunTemplateInitAndDeinitRejectExtraArguments(t *testing.T) {
+	streams, _, _ := testStreams()
+
+	for _, args := range [][]string{
+		{"init", "extra"},
+		{"deinit", "extra"},
+	} {
+		err := runTemplate(args, streams)
+		if err == nil || err.Error() != `unexpected argument "extra"` {
+			t.Fatalf("runTemplate(%v) error = %v", args, err)
+		}
+	}
+}

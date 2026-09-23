@@ -36,6 +36,46 @@ mkproj hello-world -t cpp
 
 Use `mkproj template list` to list available templates.
 
+## Starter template
+
+For a quick first run, `mkproj` can install a small example template:
+
+```console
+mkproj template init
+```
+
+It creates only the `starter` template and leaves any existing templates untouched:
+
+```text
+templates/
+└── starter/
+    ├── .mkproj/
+    │   └── setup.star
+    ├── README.md
+    └── src/
+        └── main.txt
+```
+
+The setup script replaces `{{PROJECT_NAME}}` in the example files. Because `setup.star` is removed after setup, a generated project has a simpler layout:
+
+```text
+first-project/
+├── README.md
+└── src/
+    └── main.txt
+```
+
+Try the complete flow with:
+
+```console
+mkproj template init
+mkproj template list
+mkproj first-project -t starter -o
+mkproj template deinit
+```
+
+`mkproj template init` creates `starter`; if it is already installed, the command reports the existing path and exits successfully without overwriting it. `mkproj template deinit` removes only `starter`; if it is already absent, the command reports that nothing is installed and exits successfully.
+
 ## Project creation
 
 A template may contain any files and directories:

@@ -3,73 +3,35 @@
 `mkproj` is a small cross-platform project generator built around reusable directory templates, optional Starlark setup scripts, and per-project workflows.
 
 ## Installation
+
 Prebuilt releases currently target Windows and Linux on amd64, and macOS on amd64 and arm64.
 
-### Windows
-
-Download and run the installer from the latest release:
-
-```powershell
-$uri = "https://github.com/kulikov-andrej/mkproj/releases/latest/download/mkproj-install-windows-amd64.exe"
-$installer = Join-Path $env:TEMP "mkproj-install.exe"
-Invoke-WebRequest $uri -OutFile $installer
-& $installer
-```
-
-The installer places `mkproj.exe` under `%LOCALAPPDATA%\Programs\mkproj` and adds that directory to the user `PATH` if necessary. Open a new terminal after installation when prompted.
-
-### Linux
-
-```sh
-curl -fL https://github.com/kulikov-andrej/mkproj/releases/latest/download/mkproj-install-linux-amd64 -o /tmp/mkproj-install
-chmod +x /tmp/mkproj-install
-/tmp/mkproj-install
-```
-
-The installer places `mkproj` in `~/.local/bin`. If that directory is not already in `PATH`, the installer prints a reminder.
-
-### macOS
-
-The installer is available for both Apple Silicon and Intel Macs:
-
-```sh
-case "$(uname -m)" in
-  arm64) arch=arm64 ;;
-  x86_64) arch=amd64 ;;
-  *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
-esac
-
-curl -fL "https://github.com/kulikov-andrej/mkproj/releases/latest/download/mkproj-install-darwin-$arch" -o /tmp/mkproj-install
-chmod +x /tmp/mkproj-install
-/tmp/mkproj-install
-```
-
-The installer places mkproj in ~/.local/bin. If that directory is not already in PATH, the installer prints a reminder.
+Download and run the installer from the latest release.
 
 ## Quick start
 
-List the templates available to the current user:
+Install the example template, create a project, and clean the example up when you are done:
 
 ```console
+mkproj template init
 mkproj template list
+mkproj first-project -t starter -o
+mkproj template deinit
 ```
 
-Create a project from the `cpp` template:
+The generated project starts with a small example structure:
 
-```console
-mkproj hello-world -t cpp
+```text
+first-project/
+├── README.md
+└── src/
+    └── main.txt
 ```
 
-Create a project in the current directory:
+`template deinit` removes only the bundled `starter` template. To create a project in the current directory instead, omit the path (the directory must be empty):
 
 ```console
-mkproj -t cpp
-```
-
-Create a project and open it in Visual Studio Code:
-
-```console
-mkproj hello-world -t cpp --open
+mkproj -t starter
 ```
 
 If the generated project defines a workflow, list its commands with:
@@ -88,7 +50,7 @@ mkproj run build
 
 ```text
 mkproj [<path>] -t <template> [--open]
-mkproj template list
+mkproj template [<subcommand>]
 mkproj run [<command>]
 mkproj version
 mkproj help [<topic>]
